@@ -138,10 +138,14 @@ func findfiles(param InputParam) {
 
 func parseInputParam() InputParam {
 	var param InputParam
-	param.outputname = *(flag.String("o", "out.mp4", "Name for output file"))
-	param.pathtofolder = *(flag.String("p", "."+string(filepath.Separator), "Path to work folder"))
-	param.inputname = *(flag.String("i", "All", "Base name for input files"))
+	outputname := flag.String("o", "out.mp4", "Name for output file")
+	pathtofolder := flag.String("p", "."+string(filepath.Separator), "Path to work folder")
+	inputname := flag.String("i", "All", "Base name for input files")
 	flag.Parse()
+
+	param.outputname = *outputname
+	param.pathtofolder = *pathtofolder
+	param.inputname = *inputname
 
 	if param.inputname == "All" {
 		param.inputname = ""
@@ -149,6 +153,10 @@ func parseInputParam() InputParam {
 
 	outputfileremove(param.outputname)
 
+	fmt.Printf("\ninput param:\n output name - %s;\n path to work dir - %s;\n input filter by name - %s",
+		param.outputname,
+		param.pathtofolder,
+		param.inputname)
 	return param
 }
 
