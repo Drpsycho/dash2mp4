@@ -50,11 +50,11 @@ func (s ByLength) Less(i, j int) bool {
 	return res_i_in_digit < res_j_in_digit
 }
 
-func outputfileremove(filename string) {
+func RemoveOutputFile(filename string) {
 	os.Remove(filename)
 }
 
-func packmp4(file string, outputfilename string) {
+func PackToMP4(file string, outputfilename string) {
 
 	fmt.Println(file)
 	r, err := os.Open(file)
@@ -78,7 +78,7 @@ func packmp4(file string, outputfilename string) {
 	fmt.Printf("Copied %v bytes\n", n)
 }
 
-func openfolder(pathtofolder string) []os.FileInfo {
+func OpenFolder(pathtofolder string) []os.FileInfo {
 	d, err := os.Open(pathtofolder)
 	if err != nil {
 		fmt.Println(err)
@@ -94,12 +94,12 @@ func openfolder(pathtofolder string) []os.FileInfo {
 	return files
 }
 
-func findfiles(param InputParam) {
+func FindFiles(param InputParam) (ByLength, string) {
 
-	files := openfolder(param.pathtofolder)
+	files := OpenFolder(param.pathtofolder)
 
 	var filelist ByLength
-
+	var firstfilename string
 	for _, file := range files {
 		if !(file.Mode().IsRegular()) {
 			continue
@@ -120,23 +120,17 @@ func findfiles(param InputParam) {
 
 		res := firstfile.MatchString(file.Name())
 		if res {
-			packmp4(file.Name(), param.outputname)
+			firstfilename = file.Name()
+			// PackToMP4(file.Name(), param.outputname)
 		} else {
 			filelist = append(filelist, file.Name())
 		}
 
 	}
-
-	sort.Sort(filelist)
-
-	for _, filename := range filelist {
-		if digitsRegexp.MatchString(filename) {
-			packmp4(filename, param.outputname)
-		}
-	}
+	return filelist, firstfilename
 }
 
-func parseInputParam() InputParam {
+func ParseInputParam() InputParam {
 	var param InputParam
 	outputname := flag.String("o", "out.mp4", "Name for output file")
 	pathtofolder := flag.String("p", "."+string(filepath.Separator), "Path to work folder")
@@ -147,19 +141,37 @@ func parseInputParam() InputParam {
 	param.pathtofolder = *pathtofolder
 	param.inputname = *inputname
 
+	fmt.Printf("\ninput param:\n output name - %s;\n work dir path - %s;\n input filter (by name) - %s\n",
+		param.outputname,
+		param.pathtofolder,
+		param.inputname)
+
 	if param.inputname == "All" {
 		param.inputname = ""
 	}
 
-	outputfileremove(param.outputname)
+	RemoveOutputFile(param.outputname)
 
-	fmt.Printf("\ninput param:\n output name - %s;\n path to work dir - %s;\n input filter by name - %s",
-		param.outputname,
-		param.pathtofolder,
-		param.inputname)
 	return param
 }
 
+func ResultFileStat(name string) {
+	stat, _ := os.Stat(name)
+	fmt.Println("Create file ", name, " size - ", stat.Size())
+}
+
 func main() {
-	findfiles(parseInputParam())
+	param := ParseInputParam()
+	filelist, firstfilename := FindFiles(param)
+	fmt.Println("\nCopy files to ", param.outputname, ":")
+
+	PackToMP4(firstfilename, param.outputname)
+
+	sort.Sort(filelist)
+	for _, filename := range filelist {
+		if digitsRegexp.MatchString(filename) {
+			PackToMP4(filename, param.outputname)
+		}
+	}
+	ResultFileStat(param.outputname)
 }
