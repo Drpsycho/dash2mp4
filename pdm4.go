@@ -165,8 +165,12 @@ func main() {
 	filelist, firstfilename := FindFiles(param)
 	fmt.Println("\nCopy files to ", param.outputname, ":")
 
-	PackToMP4(firstfilename, param.outputname)
+	if firstfilename == "" {
+		fmt.Println("error! no first file youstream_0_.mp4")
+		os.Exit(1)
+	}
 
+	PackToMP4(firstfilename, param.outputname)
 	sort.Sort(filelist)
 	for _, filename := range filelist {
 		if digitsRegexp.MatchString(filename) {
